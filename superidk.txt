@@ -1,13 +1,15 @@
 $computerName = $env:COMPUTERNAME
-$outputFileName = "lastUser_$computerName.csv"
+$outputFileName = "lastUser_Serial_$computerName.csv"
 
-$lastUser = Get-WmiObject -Class Win32_ComputerSystem |
-            Select-Object -ExpandProperty UserName
+$systemInfo = Get-WmiObject -Class Win32_ComputerSystem
+$serialNumber = (Get-WmiObject -Class Win32_BIOS).SerialNumber
+$lastUser = $systemInfo.UserName
 
 if ($lastUser) {
     $lastUser = $lastUser.Split('\')[-1]
     $outputData = [PSCustomObject]@{
         "ComputerName" = $computerName
+        "SerialNumber" = $serialNumber
         "LastUser" = $lastUser
     }
     $outputData | Export-Csv -Path $outputFileName -NoTypeInformation
