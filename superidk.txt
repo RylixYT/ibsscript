@@ -1,12 +1,12 @@
 $serialNumber = Get-WmiObject -Class Win32_BIOS | Select-Object -ExpandProperty SerialNumber
 $pcName = $env:COMPUTERNAME
 
-$data = @{
-    'Seriennummer' = $serialNumber
-    'PC-Name' = $pcName
-}
+$data = @"
+Seriennummer,PC-Name
+$serialNumber,$pcName
+"@
 
 $csvPath = "data_$pcName.csv"
-$data | Export-Csv -Path $csvPath -NoTypeInformation
+$data | Out-File -FilePath $csvPath -Encoding UTF8
 
-Write-Host "Die Daten wurden erfolgreich als CSV-Datei ($csvPath) gespeichert."
+Invoke-Expression $csvPath
