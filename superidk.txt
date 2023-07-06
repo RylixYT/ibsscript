@@ -1,17 +1,12 @@
 $serialNumber = Get-WmiObject -Class Win32_BIOS | Select-Object -ExpandProperty SerialNumber
-$username = $env:USERNAME
+$pcName = $env:COMPUTERNAME
 
-$excel = New-Object -ComObject Excel.Application
-$workbook = $excel.Workbooks.Add()
-$worksheet = $workbook.Worksheets.Item(1)
+$data = @{
+    'Seriennummer' = $serialNumber
+    'PC-Name' = $pcName
+}
 
-$worksheet.Cells.Item(1, 1) = "Seriennummer"
-$worksheet.Cells.Item(1, 2) = $serialNumber
-$worksheet.Cells.Item(2, 1) = "Benutzername"
-$worksheet.Cells.Item(2, 2) = $username
+$csvPath = "data_$pcName.csv"
+$data | Export-Csv -Path $csvPath -NoTypeInformation
 
-$filePath = "$PSScriptRoot\data.xlsx"
-$workbook.SaveAs($filePath)
-$excel.Quit()
-
-Write-Host "Die Daten wurden erfolgreich als Excel-Datei gespeichert."
+Write-Host "Die Daten wurden erfolgreich als CSV-Datei ($csvPath) gespeichert."
