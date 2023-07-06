@@ -1,0 +1,17 @@
+$serialNumber = Get-WmiObject -Class Win32_BIOS | Select-Object -ExpandProperty SerialNumber
+$username = $env:USERNAME
+
+$excel = New-Object -ComObject Excel.Application
+$workbook = $excel.Workbooks.Add()
+$worksheet = $workbook.Worksheets.Item(1)
+
+$worksheet.Cells.Item(1, 1) = "Seriennummer"
+$worksheet.Cells.Item(1, 2) = $serialNumber
+$worksheet.Cells.Item(2, 1) = "Benutzername"
+$worksheet.Cells.Item(2, 2) = $username
+
+$filePath = "$PSScriptRoot\data.xlsx"
+$workbook.SaveAs($filePath)
+$excel.Quit()
+
+Write-Host "Die Daten wurden erfolgreich als Excel-Datei gespeichert."
