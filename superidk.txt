@@ -7,12 +7,8 @@ $lastUser = $systemInfo.UserName
 
 if ($lastUser) {
     $lastUser = $lastUser.Split('\')[-1]
-    $outputData = [PSCustomObject]@{
-        "ComputerName" = $computerName
-        "SerialNumber" = $serialNumber
-        "LastUser" = $lastUser
-    }
-    $outputData | Export-Csv -Path $outputFileName -NoTypeInformation
+    $outputData = "$computerName,$serialNumber,$lastUser"
+    $outputData | Out-File -FilePath $outputFileName
     Write-Output "Die Informationen wurden in die CSV-Datei '$outputFileName' exportiert."
 } else {
     Write-Output "Es wurde kein Benutzer auf $computerName gefunden."
