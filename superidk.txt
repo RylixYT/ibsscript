@@ -1,21 +1,11 @@
-$csvPath = "Pfad\\zum\\Verzeichnis\\mit\\CSV-Dateien"
-$outputFilePath = "Ziel\\und\\Name\\der\\Zusammenfassung.csv"
+$computerName = $env:COMPUTERNAME
 
+$lastUser = Get-WmiObject -Class Win32_ComputerSystem |
+            Select-Object -ExpandProperty UserName
 
-$csvContent = @()
-
-
-$csvFiles = Get-ChildItem -Path $csvPath -Filter *.csv
-
-
-foreach ($file in $csvFiles) {
-    # Lese den Inhalt der CSV-Datei
-    $content = Get-Content -Path $file.FullName
-    # Füge den Inhalt zur $csvContent-Array hinzu
-    $csvContent += $content
+if ($lastUser) {
+    $lastUser = $lastUser.Split('\')[-1]
+    Write-Output "Der letzte angemeldete Benutzer auf $computerName war: $lastUser"
+} else {
+    Write-Output "Es wurde kein Benutzer auf $computerName gefunden."
 }
-
-
-$csvContent | Out-File -FilePath $outputFilePath -Encoding UTF8
-
-Write-Host "Die CSV-Dateien wurden erfolgreich zu $outputFilePath zusammengeführt."
