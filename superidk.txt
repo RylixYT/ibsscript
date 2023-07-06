@@ -1,12 +1,21 @@
-$serialNumber = Get-WmiObject -Class Win32_BIOS | Select-Object -ExpandProperty SerialNumber
-$pcName = $env:COMPUTERNAME
+$csvPath = "Pfad\\zum\\Verzeichnis\\mit\\CSV-Dateien"
+$outputFilePath = "Ziel\\und\\Name\\der\\Zusammenfassung.csv"
 
-$data = @"
-Seriennummer,PC-Name
-$serialNumber,$pcName
-"@
 
-$csvPath = "data_$pcName.csv"
-$data | Out-File -FilePath $csvPath -Encoding UTF8
+$csvContent = @()
 
-Invoke-Expression $csvPath
+
+$csvFiles = Get-ChildItem -Path $csvPath -Filter *.csv
+
+
+foreach ($file in $csvFiles) {
+    # Lese den Inhalt der CSV-Datei
+    $content = Get-Content -Path $file.FullName
+    # Füge den Inhalt zur $csvContent-Array hinzu
+    $csvContent += $content
+}
+
+
+$csvContent | Out-File -FilePath $outputFilePath -Encoding UTF8
+
+Write-Host "Die CSV-Dateien wurden erfolgreich zu $outputFilePath zusammengeführt."
