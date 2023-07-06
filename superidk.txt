@@ -1,11 +1,17 @@
 $computerName = $env:COMPUTERNAME
+$outputFileName = "lastUser_$computerName.csv"
 
 $lastUser = Get-WmiObject -Class Win32_ComputerSystem |
             Select-Object -ExpandProperty UserName
 
 if ($lastUser) {
     $lastUser = $lastUser.Split('\')[-1]
-    Write-Output "Der letzte angemeldete Benutzer auf $computerName war: $lastUser"
+    $outputData = [PSCustomObject]@{
+        "ComputerName" = $computerName
+        "LastUser" = $lastUser
+    }
+    $outputData | Export-Csv -Path $outputFileName -NoTypeInformation
+    Write-Output "Die Informationen wurden in die CSV-Datei '$outputFileName' exportiert."
 } else {
     Write-Output "Es wurde kein Benutzer auf $computerName gefunden."
 }
