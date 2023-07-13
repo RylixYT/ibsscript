@@ -1,38 +1,13 @@
-# Domänenname
-$domainName = "deine.domäne"
-
-# Verbindung zur Domäne herstellen
-$domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
-$domainController = $domain.PdcRoleOwner.Name
-$domainPath = "LDAP://" + $domainController + "/" + $domain.GetDirectoryEntry().Properties["defaultNamingContext"].Value
-
-# Aktive Verbindung zur Domäne herstellen
-$directorySearcher = New-Object System.DirectoryServices.DirectorySearcher
-$directorySearcher.SearchRoot = New-Object System.DirectoryServices.DirectoryEntry($domainPath)
-$directorySearcher.PageSize = 1000
-$directorySearcher.Filter = "(&(objectClass=User)(objectCategory=person))"
-$directorySearcher.PropertiesToLoad.AddRange(@("sAMAccountName", "lastLogon"))
-
-# Alle Benutzer abrufen und in CSV-Datei speichern
-$users = $directorySearcher.FindAll()
-
-$outputPath = "Pfad\zur\csv_datei.csv"  # Passe den Pfad entsprechend an
-
-$csvContent = @()
-
-foreach ($user in $users) {
-    $username = $user.Properties["sAMAccountName"]
-    $lastLogon = [System.DateTime]::FromFileTime($user.Properties["lastLogon"][0])
-    
-    $userEntry = @{
-        "Benutzername" = $username
-        "Letzter Logon" = $lastLogon
+$Servers = Get-ADComputer -Properties lastLogonTimeStamp -Filter * -ResultSetSize $null
+"Name;DN;Username;lastLogonTimeStamp" | Out-File ".\ServerList.csv" -Encoding UTF8
+ForEach ($Server In $Servers)
+{
+    $Username = ""
+    $User = Get-ADUser -Filter {SamAccountName -eq $Server.SamAccountName} -Properties SamAccountName
+    if ($User) {
+        $Username = $User.SamAccountName
     }
-
-    $csvContent += New-Object PSObject -Property $userEntry
+    $Output = $Server.Name + ";" + $Server.distinguishedName + ";" + $Username + ";" + [datetime]::FromFileTime($Server.lastLogonTimeStamp)
+    Write-Host $Output
+    $Output | Out-File ".\ServerList.csv" -Append -Encoding UTF8
 }
-
-$csvContent | Export-Csv -Path $outputPath -NoTypeInformation
-
-# Aufräumen
-$users.Dispose()
