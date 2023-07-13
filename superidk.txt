@@ -1,15 +1,38 @@
-$computerName = $env:COMPUTERNAME
-$outputFileName = "lastUser_Serial_$computerName.csv"
+# Domänenname
+$domainName = "deine.domäne"
 
-$systemInfo = Get-WmiObject -Class Win32_ComputerSystem
-$serialNumber = (Get-WmiObject -Class Win32_BIOS).SerialNumber
-$lastUser = $systemInfo.UserName
+# Verbindung zur Domäne herstellen
+$domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+$domainController = $domain.PdcRoleOwner.Name
+$domainPath = "LDAP://" + $domainController + "/" + $domain.GetDirectoryEntry().Properties["defaultNamingContext"].Value
 
-if ($lastUser) {
-    $lastUser = $lastUser.Split('\')[-1]
-    $outputData = "$computerName,$serialNumber,$lastUser"
-    $outputData | Out-File -FilePath $outputFileName
-    Write-Output "Die Informationen wurden in die CSV-Datei '$outputFileName' exportiert."
-} else {
-    Write-Output "Es wurde kein Benutzer auf $computerName gefunden."
+# Aktive Verbindung zur Domäne herstellen
+$directorySearcher = New-Object System.DirectoryServices.DirectorySearcher
+$directorySearcher.SearchRoot = New-Object System.DirectoryServices.DirectoryEntry($domainPath)
+$directorySearcher.PageSize = 1000
+$directorySearcher.Filter = "(&(objectClass=User)(objectCategory=person))"
+$directorySearcher.PropertiesToLoad.AddRange(@("sAMAccountName", "lastLogon"))
+
+# Alle Benutzer abrufen und in CSV-Datei speichern
+$users = $directorySearcher.FindAll()
+
+$outputPath = "Pfad\zur\csv_datei.csv"  # Passe den Pfad entsprechend an
+
+$csvContent = @()
+
+foreach ($user in $users) {
+    $username = $user.Properties["sAMAccountName"]
+    $lastLogon = [System.DateTime]::FromFileTime($user.Properties["lastLogon"][0])
+    
+    $userEntry = @{
+        "Benutzername" = $username
+        "Letzter Logon" = $lastLogon
+    }
+
+    $csvContent += New-Object PSObject -Property $userEntry
 }
+
+$csvContent | Export-Csv -Path $outputPath -NoTypeInformation
+
+# Aufräumen
+$users.Dispose()
